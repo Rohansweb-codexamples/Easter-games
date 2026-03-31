@@ -172,6 +172,18 @@
             align-items: center;
             justify-content: center;
         }
+
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 4px;
+            background: white;
+            position: absolute;
+            width: 100%;
+            z-index: 50;
+        }
     </style>
 </head>
 <body>
@@ -262,21 +274,38 @@
 
             <!-- VIEW: PRIZE DRAW -->
             <div id="view-draw" class="page-view grid-cols-12 gap-6">
-                <div class="col-span-4 google-card p-6 flex flex-col">
-                    <h2 class="text-lg font-medium mb-4">Spin Entry List</h2>
-                    <div id="draw-list" class="flex-1 overflow-y-auto custom-scroll space-y-1"></div>
-                    <button onclick="spinWheel()" id="spin-btn" class="btn-primary w-full mt-4 disabled:opacity-50">Spin The Wheel</button>
+                <div class="col-span-5 flex flex-col gap-4">
+                    <div class="google-card p-5 shrink-0">
+                        <h2 class="text-md font-bold mb-3">Add Entry</h2>
+                        <div class="relative">
+                            <input id="draw-search-input" oninput="handleDrawSearch(this.value)" type="text" placeholder="Search user library..." class="w-full border border-gray-300 p-2 rounded-lg outline-none text-sm">
+                            <div id="search-results-dropdown" class="search-results hidden"></div>
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <input id="draw-weight-input" type="number" value="1" min="1" class="w-20 border p-2 rounded-lg text-sm outline-none" title="Chances (Weight)">
+                            <button onclick="addSelectedToDraw()" id="add-to-draw-btn" class="flex-1 bg-green-600 text-white font-bold py-2 rounded-lg text-sm disabled:opacity-50" disabled>Add Selected</button>
+                        </div>
+                    </div>
+                    <div class="google-card p-5 flex-1 flex flex-col overflow-hidden">
+                        <h2 class="text-sm font-bold mb-3 flex justify-between">
+                            Current Pool 
+                            <span class="text-gray-400 font-normal" id="pool-total-weight">0 Total Odds</span>
+                        </h2>
+                        <div id="draw-list" class="flex-1 overflow-y-auto custom-scroll space-y-2"></div>
+                        <button onclick="spinWheel()" id="spin-btn" class="btn-primary w-full mt-4 disabled:opacity-50" disabled>Spin The Wheel</button>
+                    </div>
                 </div>
-                <div class="col-span-8 google-card flex flex-col items-center justify-center relative bg-gray-50">
+                <div class="col-span-7 google-card flex flex-col items-center justify-center relative bg-gray-50 overflow-hidden">
                     <div id="winner-banner" class="absolute top-10 transform scale-0 transition-transform duration-500 bg-white text-blue-600 border-2 border-blue-600 px-10 py-4 rounded-2xl font-bold text-3xl shadow-2xl z-20">
                         🎉 <span id="winner-name">Winner</span>! 🎉
                     </div>
-                    <div id="wheel-container" class="w-[350px] h-[350px] relative">
+                    <div id="wheel-container" class="w-[400px] h-[400px] relative">
                         <div class="wheel-pointer"></div>
                         <svg id="wheel-svg" viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl">
                             <circle cx="50" cy="50" r="48" fill="white" stroke="#eee" stroke-width="2"/>
                         </svg>
                     </div>
+                    <div class="absolute bottom-4 text-[10px] text-gray-400">Higher numbers = Larger wheel slices</div>
                 </div>
             </div>
 
@@ -315,7 +344,9 @@
 
     <script>
         let users = [];
-        let events = {}; // Key: "YYYY-MM-DD", Value: Array of strings
+        let drawPool = []; // Array of { userId, name, color, weight }
+        let selectedUserForDraw = null;
+        let events = {};
         let currentCalendarDate = new Date();
         let selectedDateKey = "";
         let isSpinning = false;
@@ -329,7 +360,6 @@
             renderCalendar();
             updateWheel();
             
-            // Add some default system events
             const todayKey = getFormattedDate(new Date());
             events[todayKey] = ["OS Initialized", "System Health Check"];
         };
@@ -422,7 +452,7 @@
                 `).join('');
         }
 
-        // --- CALENDAR LOGIC (DYNAMIC) ---
+        // --- CALENDAR LOGIC ---
         function renderCalendar() {
             const display = document.getElementById('calendar-display');
             const label = document.getElementById('calendar-month-year');
@@ -445,12 +475,10 @@
             const prevDays = new Date(year, month, 0).getDate();
             const todayKey = getFormattedDate(new Date());
 
-            // Padding previous month
             for(let i = firstDay - 1; i >= 0; i--) {
                 const dayNum = prevDays - i;
                 createCell(dayNum, true, new Date(year, month - 1, dayNum));
             }
-            // Current month
             for(let i = 1; i <= daysInMonth; i++) {
                 const dateObj = new Date(year, month, i);
                 const isToday = getFormattedDate(dateObj) === todayKey;
@@ -471,11 +499,7 @@
                 });
             }
 
-            cell.innerHTML = `
-                <div class="day-number text-[11px] font-bold text-gray-500 mb-1">${num}</div>
-                <div class="event-container">${eventsHtml}</div>
-            `;
-            
+            cell.innerHTML = `<div class="day-number text-[11px] font-bold text-gray-500 mb-1">${num}</div><div class="event-container">${eventsHtml}</div>`;
             cell.onclick = () => openModal(dateKey, num);
             document.getElementById('calendar-display').appendChild(cell);
         }
@@ -512,48 +536,133 @@
             closeModal();
         }
 
-        // --- DRAW LOGIC ---
+        // --- IMPROVED DRAW LOGIC ---
+        function handleDrawSearch(val) {
+            const results = document.getElementById('search-results-dropdown');
+            if(!val.trim()) { results.classList.add('hidden'); return; }
+            
+            const filtered = users.filter(u => u.name.toLowerCase().includes(val.toLowerCase())).slice(0, 5);
+            if(filtered.length === 0) { results.innerHTML = '<div class="p-3 text-xs text-gray-400">No results</div>'; }
+            else {
+                results.innerHTML = filtered.map(u => `
+                    <div onclick="selectUserForDraw(${JSON.stringify(u).replace(/"/g, '&quot;')})" class="p-2 hover:bg-blue-50 cursor-pointer text-xs border-b last:border-0 flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full" style="background:${u.color}"></div>
+                        ${u.name}
+                    </div>
+                `).join('');
+            }
+            results.classList.remove('hidden');
+        }
+
+        function selectUserForDraw(u) {
+            selectedUserForDraw = u;
+            document.getElementById('draw-search-input').value = u.name;
+            document.getElementById('search-results-dropdown').classList.add('hidden');
+            document.getElementById('add-to-draw-btn').disabled = false;
+        }
+
+        function addSelectedToDraw() {
+            if(!selectedUserForDraw) return;
+            const weight = parseInt(document.getElementById('draw-weight-input').value) || 1;
+            
+            // Check if user is already in the pool
+            const existingEntry = drawPool.find(d => d.id === selectedUserForDraw.id);
+            
+            if (existingEntry) {
+                // Automatically add chance to existing user
+                existingEntry.weight += weight;
+            } else {
+                // Add as new entry
+                drawPool.push({ ...selectedUserForDraw, weight, drawId: Date.now() });
+            }
+            
+            selectedUserForDraw = null;
+            document.getElementById('draw-search-input').value = '';
+            document.getElementById('add-to-draw-btn').disabled = true;
+            renderDrawList();
+            updateWheel();
+        }
+
+        function removeFromDraw(drawId) {
+            drawPool = drawPool.filter(d => d.drawId !== drawId);
+            renderDrawList();
+            updateWheel();
+        }
+
         function renderDrawList() {
             const list = document.getElementById('draw-list');
-            list.innerHTML = users.map(u => `
-                <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg text-xs font-medium">
-                    <div class="w-2 h-2 rounded-full" style="background-color: ${u.color}"></div>
-                    <span class="truncate">${u.name}</span>
-                </div>
-            `).join('');
-            document.getElementById('spin-btn').disabled = users.length < 2;
+            let total = 0;
+            list.innerHTML = drawPool.length === 0 ? `<div class="text-center py-10 text-gray-400 text-xs italic">No participants added yet</div>` :
+                drawPool.map(u => {
+                    total += u.weight;
+                    return `
+                    <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg text-xs font-medium border border-transparent hover:border-gray-200">
+                        <div class="w-2 h-2 rounded-full" style="background-color: ${u.color}"></div>
+                        <span class="flex-1 truncate">${u.name}</span>
+                        <span class="bg-gray-200 px-2 py-0.5 rounded-full text-[10px]">x${u.weight}</span>
+                        <button onclick="removeFromDraw(${u.drawId})" class="text-red-400 hover:text-red-600 px-1">✕</button>
+                    </div>
+                `}).join('');
+            
+            document.getElementById('pool-total-weight').innerText = `${total} Total Odds`;
+            document.getElementById('spin-btn').disabled = drawPool.length < 2;
         }
 
         function updateWheel() {
             const svg = document.getElementById('wheel-svg');
-            if(users.length < 2) {
-                svg.innerHTML = `<circle cx="50" cy="50" r="48" fill="white" stroke="#eee" stroke-width="2"/><text x="50" y="52" text-anchor="middle" font-size="4" fill="#ccc">NEED 2+ USERS</text>`;
+            if(drawPool.length < 2) {
+                svg.innerHTML = `<circle cx="50" cy="50" r="48" fill="white" stroke="#eee" stroke-width="2"/><text x="50" y="52" text-anchor="middle" font-size="4" fill="#ccc">NEED 2+ ENTRIES</text>`;
                 return;
             }
-            const slice = 360 / users.length;
+
+            const totalWeight = drawPool.reduce((acc, u) => acc + u.weight, 0);
+            let cumulativeAngle = 0;
             let paths = '';
-            users.forEach((u, i) => {
-                const start = i * slice; const end = (i + 1) * slice;
+            
+            drawPool.forEach((u, i) => {
+                const sliceAngle = (u.weight / totalWeight) * 360;
+                const start = cumulativeAngle; 
+                const end = cumulativeAngle + sliceAngle;
+                
                 const x1 = 50 + 48 * Math.cos(Math.PI * (start - 90) / 180);
                 const y1 = 50 + 48 * Math.sin(Math.PI * (start - 90) / 180);
                 const x2 = 50 + 48 * Math.cos(Math.PI * (end - 90) / 180);
                 const y2 = 50 + 48 * Math.sin(Math.PI * (end - 90) / 180);
-                paths += `<path d="M 50 50 L ${x1} ${y1} A 48 48 0 ${slice > 180 ? 1 : 0} 1 ${x2} ${y2} Z" fill="${u.color}" stroke="white" stroke-width="0.2"/>`;
+                
+                const largeArc = sliceAngle > 180 ? 1 : 0;
+                paths += `<path d="M 50 50 L ${x1} ${y1} A 48 48 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${u.color}" stroke="white" stroke-width="0.3"/>`;
+                cumulativeAngle = end;
             });
-            svg.innerHTML = paths + `<circle cx="50" cy="50" r="4" fill="white"/>`;
+            
+            svg.innerHTML = paths + `<circle cx="50" cy="50" r="4" fill="white" stroke="#eee" stroke-width="0.5"/>`;
         }
 
         function spinWheel() {
-            if(isSpinning) return;
+            if(isSpinning || drawPool.length < 2) return;
             isSpinning = true;
             document.getElementById('winner-banner').classList.replace('scale-100', 'scale-0');
             const extra = 1800 + Math.random() * 1800;
             currentRotation += extra;
             document.getElementById('wheel-svg').style.transform = `rotate(${currentRotation}deg)`;
+            
             setTimeout(() => {
                 isSpinning = false;
-                const winningAngle = (360 - (currentRotation % 360)) % 360;
-                const winner = users[Math.floor(winningAngle / (360 / users.length))];
+                const finalRotation = (currentRotation % 360);
+                const winningAngle = (360 - finalRotation) % 360;
+                
+                const totalWeight = drawPool.reduce((acc, u) => acc + u.weight, 0);
+                let currentAngle = 0;
+                let winner = drawPool[0];
+
+                for(let entry of drawPool) {
+                    const slice = (entry.weight / totalWeight) * 360;
+                    if(winningAngle >= currentAngle && winningAngle < currentAngle + slice) {
+                        winner = entry;
+                        break;
+                    }
+                    currentAngle += slice;
+                }
+
                 document.getElementById('winner-name').innerText = winner.name;
                 document.getElementById('winner-banner').classList.replace('scale-0', 'scale-100');
             }, 4000);
