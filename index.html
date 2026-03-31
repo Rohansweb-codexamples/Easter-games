@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Easter Room OS - Light Edition</title>
+    <title>Easter Room OS - Full Suite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap');
         
         :root {
             --g-blue: #4285F4;
@@ -37,18 +37,12 @@
             background: white;
             border-radius: 16px;
             box-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
-            transition: box-shadow 0.2s ease-in-out;
-        }
-
-        .google-card:hover {
-            box-shadow: 0 1px 3px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
         }
 
         .nav-btn {
             color: var(--g-gray);
             transition: all 0.2s ease;
             border-bottom: 3px solid transparent;
-            border-radius: 0;
         }
 
         .nav-btn.active {
@@ -60,13 +54,13 @@
             display: none;
             height: 100%;
             padding: 24px;
-            animation: fadeIn 0.3s ease;
+            animation: fadeIn 0.2s ease;
         }
 
         .page-view.active { display: grid; }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -79,29 +73,21 @@
             font-weight: 500;
             padding: 10px 24px;
             border-radius: 24px;
-            transition: box-shadow 0.2s;
+            transition: all 0.2s;
         }
 
-        .btn-primary:hover {
-            box-shadow: 0 1px 3px 1px rgba(66,133,244,.15), 0 1px 2px 0 rgba(66,133,244,.3);
-            background-color: #1a73e8;
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+            font-size: 12px;
         }
-
-        #os-modal-overlay {
-            background: rgba(32, 33, 36, 0.6);
-            display: none;
-            z-index: 1000;
-        }
-
-        input, select {
-            border: 1px solid #dadce0;
-            border-radius: 8px;
-            padding: 12px 16px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        input:focus { border-color: var(--g-blue); }
 
         /* Calendar Grid */
         .calendar-grid {
@@ -114,72 +100,46 @@
             font-size: 11px;
             font-weight: 700;
             color: var(--g-gray);
-            padding: 8px;
+            padding: 12px;
             border-bottom: 1px solid #f1f3f4;
             text-transform: uppercase;
         }
         .calendar-cell {
             border-right: 1px solid #f1f3f4;
             border-bottom: 1px solid #f1f3f4;
-            padding: 8px;
+            padding: 10px;
             height: 100%;
-            min-height: 80px;
+            min-height: 100px;
             background: white;
-            transition: background 0.2s;
+            position: relative;
         }
-        .calendar-cell:nth-child(7n) { border-right: none; }
-        .calendar-cell:hover { background: #f8f9fa; }
-        .calendar-cell.other-month { color: #dadce0; background: #fafafa; }
-        .calendar-cell.today { background: #e8f0fe; }
-        .calendar-cell.today .day-number { background: var(--g-blue); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+        .calendar-cell:hover { background-color: #fcfcfc; }
         
         .event-chip {
             font-size: 10px;
             padding: 2px 6px;
             border-radius: 4px;
-            margin-top: 2px;
+            margin-top: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             font-weight: 500;
-        }
-        .event-NORMAL { background: #e8f0fe; color: #1967d2; }
-        .event-HIGH { background: #fef7e0; color: #b06000; }
-        .event-CRITICAL { background: #fce8e6; color: #c5221f; }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
+            background: #e8f0fe;
+            color: #1967d2;
         }
 
-        /* Wheel Styles */
-        #wheel-container {
-            position: relative;
-            width: 320px;
-            height: 320px;
-            margin: 0 auto;
-        }
         #wheel-svg {
             transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
-            transform: rotate(0deg);
         }
         .wheel-pointer {
             position: absolute;
-            top: -10px;
+            top: -15px;
             left: 50%;
             transform: translateX(-50%);
-            width: 0;
-            height: 0;
+            width: 0; height: 0;
             border-left: 15px solid transparent;
             border-right: 15px solid transparent;
             border-top: 30px solid var(--g-red);
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
             z-index: 10;
         }
     </style>
@@ -187,258 +147,164 @@
 <body>
 
     <div class="os-container">
-        
         <!-- HEADER -->
         <header class="bg-white border-b border-gray-200 flex items-center justify-between px-6">
             <div class="flex items-center gap-3">
                 <div class="flex gap-1">
-                    <div class="w-2 h-2 rounded-full" style="background: var(--g-blue)"></div>
-                    <div class="w-2 h-2 rounded-full" style="background: var(--g-red)"></div>
-                    <div class="w-2 h-2 rounded-full" style="background: var(--g-yellow)"></div>
-                    <div class="w-2 h-2 rounded-full" style="background: var(--g-green)"></div>
+                    <div class="w-2 h-2 rounded-full bg-[#4285F4]"></div>
+                    <div class="w-2 h-2 rounded-full bg-[#EA4335]"></div>
+                    <div class="w-2 h-2 rounded-full bg-[#FBBC05]"></div>
+                    <div class="w-2 h-2 rounded-full bg-[#34A853]"></div>
                 </div>
-                <span class="text-xl font-medium text-gray-700 tracking-tight">Easter Room <span class="font-bold text-gray-900">OS</span></span>
+                <span class="text-xl font-medium">Easter Room <span class="font-bold">OS</span></span>
             </div>
-            <div class="flex items-center gap-6">
-                <div class="text-right">
-                    <div id="clock" class="text-lg font-medium text-gray-900 leading-none">00:00:00</div>
-                    <div id="date-header" class="text-[10px] text-gray-500 font-medium uppercase tracking-wider mt-1">Mar 31, 2026</div>
-                </div>
-                <div class="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-500 font-bold">A</div>
-            </div>
+            <div id="clock" class="text-lg font-medium text-gray-700 font-mono">00:00:00</div>
         </header>
 
-        <!-- VIEWPORT -->
+        <!-- MAIN VIEWPORT -->
         <main class="relative h-full overflow-hidden">
             
-            <!-- VIEW: USERS -->
+            <!-- VIEW: DIRECTORY -->
             <div id="view-users" class="page-view active grid-cols-12 gap-6">
-                <div class="col-span-4 google-card p-8 flex flex-col">
-                    <h2 class="text-lg font-medium mb-6">Add new user</h2>
-                    <div class="space-y-6">
-                        <div class="flex flex-col gap-2">
-                            <label class="text-xs font-medium text-gray-600 ml-1">Name</label>
-                            <input id="user-name-input" type="text" placeholder="e.g. John Doe" class="w-full">
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <label class="text-xs font-medium text-gray-600 ml-1">Role</label>
-                            <select id="user-role-input" class="w-full bg-white">
-                                <option value="GUEST">Guest</option>
-                                <option value="MODERATOR">Moderator</option>
-                                <option value="ADMIN">Administrator</option>
-                            </select>
-                        </div>
-                        <button onclick="addUser()" class="btn-primary w-full mt-2">Add User</button>
+                <div class="col-span-4 google-card p-6 flex flex-col">
+                    <h2 class="text-lg font-medium mb-4">Add Participant</h2>
+                    <div class="space-y-4">
+                        <input id="user-name-input" type="text" placeholder="Enter full name" class="w-full border border-gray-300 p-3 rounded-lg outline-none">
+                        <select id="user-role-input" class="w-full border border-gray-300 p-3 rounded-lg bg-white">
+                            <option value="GUEST">Guest</option>
+                            <option value="MODERATOR">Moderator</option>
+                            <option value="ADMIN">Administrator</option>
+                        </select>
+                        <button onclick="handleManualAdd()" class="btn-primary w-full">Add User</button>
+                        <button onclick="addRandomUsers(50)" class="w-full text-xs font-bold text-blue-600 bg-blue-50 py-2 rounded-lg">Add 50 Random Users</button>
                     </div>
-                    
-                    <div class="mt-auto pt-8 border-t border-gray-100">
-                        <div class="flex justify-between text-xs font-medium text-gray-500 mb-2">
-                            <span>Capacity</span>
-                            <span id="user-count-display">0 / 250</span>
+                    <div class="mt-auto pt-6">
+                        <div class="flex justify-between text-xs font-bold text-gray-500 mb-2">
+                            <span>Population</span>
+                            <span id="user-count-label">0 / 500+</span>
                         </div>
                         <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div id="user-progress-bar" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
+                            <div id="user-progress-bar" class="h-full bg-green-500 transition-all duration-300 w-0"></div>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-span-8 google-card p-0 flex flex-col">
-                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h2 class="text-lg font-medium">Directory</h2>
-                        <span class="text-xs text-gray-400 font-mono" id="pulse-ticker">System ready</span>
+                <div class="col-span-8 google-card flex flex-col overflow-hidden">
+                    <div class="p-4 border-b flex justify-between items-center">
+                        <h3 class="font-medium">User Directory</h3>
+                        <div class="text-xs bg-gray-100 px-3 py-1 rounded-full text-gray-600 font-mono" id="last-action">Ready</div>
                     </div>
-                    <div id="user-list" class="flex-1 overflow-y-auto custom-scroll p-6 grid grid-cols-2 gap-4 content-start">
-                        <div id="empty-users" class="col-span-2 py-20 flex flex-col items-center justify-center opacity-40">
-                            <div class="text-5xl mb-4">👥</div>
-                            <p class="text-sm font-medium">No users found</p>
-                        </div>
-                    </div>
+                    <div id="user-list" class="flex-1 overflow-y-auto custom-scroll p-4 grid grid-cols-2 md:grid-cols-3 gap-3"></div>
                 </div>
             </div>
 
-            <!-- VIEW: TRACKING -->
-            <div id="view-tracking" class="page-view grid-cols-12 grid-rows-6 gap-6 h-full">
-                <div class="col-span-12 row-span-4 google-card p-8 flex flex-col">
-                    <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h3 class="text-xl font-medium text-gray-900">Total System Activity</h3>
-                            <p class="text-sm text-gray-500">Live monitoring of user interactions</p>
+            <!-- VIEW: CALENDAR -->
+            <div id="view-calendar" class="page-view grid-cols-12 gap-6">
+                <div class="col-span-12 google-card p-0 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
+                        <div class="flex items-center gap-4">
+                            <h2 id="calendar-month-year" class="text-lg font-medium w-40 text-center">March 2026</h2>
+                            <div class="flex border border-gray-200 rounded-lg overflow-hidden">
+                                <button onclick="changeMonth(-1)" class="px-4 py-1 hover:bg-gray-50">‹</button>
+                                <button onclick="changeMonth(1)" class="px-4 py-1 hover:bg-gray-50 border-l">›</button>
+                            </div>
                         </div>
+                        <button onclick="addEvent()" class="btn-primary text-xs py-2">Add Event</button>
                     </div>
-                    <div class="flex-1 min-h-0">
-                        <canvas id="timeChart"></canvas>
-                    </div>
-                </div>
-                <div class="col-span-5 row-span-2 google-card p-6 flex flex-col">
-                    <h3 class="text-sm font-medium text-gray-500 mb-4 uppercase tracking-wider text-[10px]">User Roles</h3>
-                    <div class="flex-1 min-h-0 flex items-center justify-center">
-                        <canvas id="pieChart"></canvas>
-                    </div>
-                </div>
-                <div class="col-span-7 row-span-2 google-card p-6 flex flex-col">
-                    <h3 class="text-sm font-medium text-gray-500 mb-4 uppercase tracking-wider text-[10px]">Regional Traffic</h3>
-                    <div class="flex-1 min-h-0">
-                        <canvas id="barChart"></canvas>
+                    <div class="flex-1 overflow-y-auto custom-scroll bg-gray-50">
+                        <div class="calendar-grid h-full" id="calendar-display"></div>
                     </div>
                 </div>
             </div>
 
             <!-- VIEW: PRIZE DRAW -->
             <div id="view-draw" class="page-view grid-cols-12 gap-6">
-                <div class="col-span-4 google-card p-8 flex flex-col">
-                    <h2 class="text-lg font-medium mb-2">Entrants</h2>
-                    <p class="text-xs text-gray-500 mb-6">Add participants for the draw</p>
-                    
-                    <div class="flex gap-2 mb-6">
-                        <input id="draw-name-input" type="text" placeholder="Name..." class="flex-1">
-                        <button onclick="addDrawParticipant()" class="bg-gray-100 hover:bg-gray-200 p-3 rounded-lg text-lg">➕</button>
-                    </div>
-
-                    <div id="draw-list" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-2">
-                        <!-- Names here -->
-                        <div class="text-center py-10 text-gray-400 text-sm italic">No participants yet</div>
-                    </div>
-
-                    <button onclick="spinWheel()" id="spin-btn" class="btn-primary w-full mt-6 disabled:opacity-50 disabled:cursor-not-allowed">Pick a Winner</button>
+                <div class="col-span-4 google-card p-6 flex flex-col">
+                    <h2 class="text-lg font-medium mb-4">Spin Entry List</h2>
+                    <div id="draw-list" class="flex-1 overflow-y-auto custom-scroll space-y-1"></div>
+                    <button onclick="spinWheel()" id="spin-btn" class="btn-primary w-full mt-4 disabled:opacity-50">Spin The Wheel</button>
                 </div>
-
-                <div class="col-span-8 google-card p-8 flex flex-col items-center justify-center relative">
-                    <div id="winner-banner" class="absolute top-10 transform scale-0 transition-transform duration-500 bg-yellow-400 text-yellow-900 px-8 py-3 rounded-full font-bold text-xl shadow-xl z-20">
-                        🎉 <span id="winner-name">WINNER</span> 🎉
+                <div class="col-span-8 google-card flex flex-col items-center justify-center relative bg-gray-50">
+                    <div id="winner-banner" class="absolute top-10 transform scale-0 transition-transform duration-500 bg-white text-blue-600 border-2 border-blue-600 px-10 py-4 rounded-2xl font-bold text-3xl shadow-2xl z-20">
+                        🎉 <span id="winner-name">Winner</span>! 🎉
                     </div>
-
-                    <div id="wheel-container">
+                    <div id="wheel-container" class="w-[350px] h-[350px] relative">
                         <div class="wheel-pointer"></div>
-                        <svg id="wheel-svg" viewBox="0 0 100 100" class="w-full h-full">
-                            <circle cx="50" cy="50" r="48" fill="#f1f3f4" stroke="#dadce0" stroke-width="1"/>
-                            <text x="50" y="55" text-anchor="middle" font-size="6" fill="#dadce0" font-weight="bold">ADD NAMES</text>
+                        <svg id="wheel-svg" viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl">
+                            <circle cx="50" cy="50" r="48" fill="white" stroke="#eee" stroke-width="2"/>
                         </svg>
                     </div>
-
-                    <p class="mt-8 text-gray-500 text-sm font-medium">Click "Pick a Winner" to start the rotation</p>
                 </div>
             </div>
 
-            <!-- VIEW: CALENDAR -->
-            <div id="view-calendar" class="page-view grid-cols-12 gap-6">
-                <div class="col-span-9 google-card p-0 flex flex-col overflow-hidden">
-                    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
-                        <div class="flex items-center gap-4">
-                            <h2 id="calendar-month-year" class="text-lg font-medium">March 2026</h2>
-                            <div class="flex border border-gray-200 rounded-lg overflow-hidden">
-                                <button onclick="changeMonth(-1)" class="px-3 py-1 hover:bg-gray-50 text-gray-600">‹</button>
-                                <button onclick="changeMonth(1)" class="px-3 py-1 hover:bg-gray-50 text-gray-600 border-l border-gray-200">›</button>
-                            </div>
-                        </div>
-                        <button onclick="openModal('modal-event')" class="btn-primary py-2 text-sm">Add Event</button>
-                    </div>
-                    <div class="flex-1 overflow-hidden">
-                        <div class="calendar-grid h-full" id="calendar-display">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-span-3 google-card p-6 flex flex-col">
-                    <h3 class="text-sm font-medium text-gray-500 mb-4 uppercase tracking-wider text-[10px]">Today's Pulse</h3>
-                    <div id="pulse-log" class="flex-1 overflow-y-auto custom-scroll text-[11px] font-mono space-y-3 text-gray-500">
+            <!-- VIEW: ANALYTICS -->
+            <div id="view-tracking" class="page-view grid-cols-12 gap-6">
+                <div class="col-span-12 google-card p-8">
+                    <h2 class="text-xl font-medium mb-6">Database Health</h2>
+                    <div class="h-64">
+                        <canvas id="healthChart"></canvas>
                     </div>
                 </div>
             </div>
+
         </main>
 
         <!-- NAVIGATION -->
-        <nav class="bg-white border-t border-gray-200 flex items-center justify-center gap-8">
-            <button onclick="switchPage('users', this)" class="nav-btn active flex items-center gap-2 h-full px-4">
-                <span class="text-xl">👤</span>
-                <span class="text-sm font-medium">Users</span>
+        <nav class="bg-white border-t border-gray-200 flex items-center justify-center gap-6">
+            <button onclick="switchPage('users', this)" class="nav-btn active flex flex-col items-center justify-center h-full px-4">
+                <span class="text-xl">👥</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest mt-1">Directory</span>
             </button>
-            <button onclick="switchPage('tracking', this)" class="nav-btn flex items-center gap-2 h-full px-4">
-                <span class="text-xl">📈</span>
-                <span class="text-sm font-medium">Tracking</span>
-            </button>
-            <button onclick="switchPage('draw', this)" class="nav-btn flex items-center gap-2 h-full px-4">
-                <span class="text-xl">🎡</span>
-                <span class="text-sm font-medium">Prize Draw</span>
-            </button>
-            <button onclick="switchPage('calendar', this)" class="nav-btn flex items-center gap-2 h-full px-4">
+            <button onclick="switchPage('calendar', this)" class="nav-btn flex flex-col items-center justify-center h-full px-4">
                 <span class="text-xl">📅</span>
-                <span class="text-sm font-medium">Calendar</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest mt-1">Planner</span>
+            </button>
+            <button onclick="switchPage('draw', this)" class="nav-btn flex flex-col items-center justify-center h-full px-4">
+                <span class="text-xl">🎡</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest mt-1">Prize Draw</span>
+            </button>
+            <button onclick="switchPage('tracking', this)" class="nav-btn flex flex-col items-center justify-center h-full px-4">
+                <span class="text-xl">📊</span>
+                <span class="text-[9px] font-bold uppercase tracking-widest mt-1">Analytics</span>
             </button>
         </nav>
     </div>
 
-    <!-- MODAL -->
-    <div id="os-modal-overlay" class="fixed inset-0 flex items-center justify-center p-6">
-        <div id="modal-event" class="google-card p-8 max-w-md w-full hidden">
-            <h3 class="text-xl font-bold mb-6">Create Event</h3>
-            <div class="space-y-4">
-                <input id="event-name" type="text" placeholder="Event title..." class="w-full">
-                <div class="grid grid-cols-2 gap-4">
-                    <input id="event-date" type="date">
-                    <select id="event-priority">
-                        <option value="NORMAL">Normal</option>
-                        <option value="HIGH">High</option>
-                        <option value="CRITICAL">Critical</option>
-                    </select>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-8">
-                <button onclick="closeModal()" class="flex-1 py-3 text-gray-500 font-medium hover:bg-gray-50 rounded-lg">Cancel</button>
-                <button onclick="submitEvent()" class="flex-1 btn-primary py-3">Create</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        const users = [];
-        const events = [];
-        const participants = [];
-        let charts = { time: null, pie: null, bar: null };
+        let users = [];
         let currentCalendarDate = new Date();
         let isSpinning = false;
         let currentRotation = 0;
+        let healthChart = null;
 
         window.onload = () => {
             initClock();
-            initCharts();
+            initChart();
+            renderUsers();
             renderCalendar();
-            logPulse("System initialized");
+            updateWheel();
         };
 
         function initClock() {
             setInterval(() => {
-                const now = new Date();
-                document.getElementById('clock').innerText = now.toTimeString().split(' ')[0];
-                document.getElementById('date-header').innerText = now.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                document.getElementById('clock').innerText = new Date().toTimeString().split(' ')[0];
             }, 1000);
         }
 
-        function initCharts() {
-            Chart.defaults.color = '#5f6368';
-            Chart.defaults.font.family = "'Google Sans', sans-serif";
-            charts.time = new Chart(document.getElementById('timeChart'), {
+        function initChart() {
+            const ctx = document.getElementById('healthChart');
+            healthChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    labels: ['T-5', 'T-4', 'T-3', 'T-2', 'T-1', 'Now'],
                     datasets: [{
-                        label: 'Active Users',
-                        data: [5, 2, 25, 65, 80, 40],
+                        label: 'User Load',
+                        data: [0, 0, 0, 0, 0, 0],
                         borderColor: '#4285F4',
-                        backgroundColor: 'rgba(66, 133, 244, 0.05)',
-                        fill: true, tension: 0.4, borderWidth: 3
+                        backgroundColor: 'rgba(66, 133, 244, 0.1)',
+                        fill: true, tension: 0.4
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-            charts.pie = new Chart(document.getElementById('pieChart'), {
-                type: 'doughnut',
-                data: { labels: ['Guests', 'Mods', 'Admins'], datasets: [{ data: [1, 0, 0], backgroundColor: ['#4285F4', '#EA4335', '#FBBC05'] }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'bottom' } } }
-            });
-            charts.bar = new Chart(document.getElementById('barChart'), {
-                type: 'bar',
-                data: { labels: ['NA', 'EU', 'AS', 'LA', 'AF'], datasets: [{ data: [450, 390, 600, 250, 180], backgroundColor: '#34A853', borderRadius: 8 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
@@ -447,191 +313,141 @@
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`view-${pageId}`).classList.add('active');
             btn.classList.add('active');
-            if(pageId === 'tracking') setTimeout(() => Object.values(charts).forEach(c => c && c.resize()), 100);
-            if(pageId === 'calendar') renderCalendar();
+            if(pageId === 'draw') { renderDrawList(); updateWheel(); }
+            if(pageId === 'calendar') { renderCalendar(); }
         }
 
-        // --- DRAW LOGIC ---
-        function addDrawParticipant() {
-            const input = document.getElementById('draw-name-input');
-            const name = input.value.trim();
+        // --- DIRECTORY LOGIC ---
+        function handleManualAdd() {
+            const nameInp = document.getElementById('user-name-input');
+            const roleInp = document.getElementById('user-role-input');
+            const name = nameInp.value.trim();
             if(!name) return;
-            participants.push(name);
-            input.value = '';
-            renderDrawList();
-            updateWheel();
-            logPulse(`Participant added to draw: ${name}`);
+            users.push({ id: Date.now() + Math.random(), name, role: roleInp.value, color: getRandomColor() });
+            nameInp.value = '';
+            updateUI();
         }
 
-        function removeDrawParticipant(idx) {
-            participants.splice(idx, 1);
-            renderDrawList();
-            updateWheel();
-        }
-
-        function renderDrawList() {
-            const list = document.getElementById('draw-list');
-            if(participants.length === 0) {
-                list.innerHTML = '<div class="text-center py-10 text-gray-400 text-sm italic">No participants yet</div>';
-                return;
+        function addRandomUsers(count) {
+            const first = ["James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael", "Linda", "David", "Barbara"];
+            const last = ["Smith", "Jones", "Brown", "Taylor", "Williams", "Wilson", "Johnson", "Davis", "Miller"];
+            for(let i = 0; i < count; i++) {
+                users.push({
+                    id: Date.now() + Math.random(),
+                    name: `${first[Math.floor(Math.random()*first.length)]} ${last[Math.floor(Math.random()*last.length)]}`,
+                    role: "GUEST",
+                    color: getRandomColor()
+                });
             }
-            list.innerHTML = participants.map((p, i) => `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 animate-fadeIn">
-                    <span class="font-medium text-sm text-gray-700">${p}</span>
-                    <button onclick="removeDrawParticipant(${i})" class="text-gray-400 hover:text-red-500">✕</button>
-                </div>
-            `).join('');
-            document.getElementById('spin-btn').disabled = participants.length < 2;
+            updateUI();
         }
 
-        function updateWheel() {
-            const svg = document.getElementById('wheel-svg');
-            if(participants.length < 2) {
-                svg.innerHTML = `<circle cx="50" cy="50" r="48" fill="#f1f3f4" stroke="#dadce0" stroke-width="1"/><text x="50" y="55" text-anchor="middle" font-size="6" fill="#dadce0" font-weight="bold">ADD NAMES</text>`;
-                return;
+        function updateUI() {
+            renderUsers();
+            const count = users.length;
+            document.getElementById('user-count-label').innerText = `${count} / 500+`;
+            document.getElementById('user-progress-bar').style.width = `${Math.min((count/500)*100, 100)}%`;
+            if(healthChart) {
+                healthChart.data.datasets[0].data.shift();
+                healthChart.data.datasets[0].data.push(count);
+                healthChart.update();
             }
-
-            const colors = ['#4285F4', '#EA4335', '#FBBC05', '#34A853'];
-            const sliceAngle = 360 / participants.length;
-            let paths = '';
-            
-            participants.forEach((p, i) => {
-                const startAngle = i * sliceAngle;
-                const endAngle = (i + 1) * sliceAngle;
-                const largeArc = sliceAngle > 180 ? 1 : 0;
-                
-                const x1 = 50 + 48 * Math.cos(Math.PI * (startAngle - 90) / 180);
-                const y1 = 50 + 48 * Math.sin(Math.PI * (startAngle - 90) / 180);
-                const x2 = 50 + 48 * Math.cos(Math.PI * (endAngle - 90) / 180);
-                const y2 = 50 + 48 * Math.sin(Math.PI * (endAngle - 90) / 180);
-
-                const color = colors[i % colors.length];
-                paths += `<path d="M 50 50 L ${x1} ${y1} A 48 48 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${color}" stroke="white" stroke-width="0.5"/>`;
-                
-                // Add text
-                const textAngle = startAngle + sliceAngle / 2;
-                const tx = 50 + 25 * Math.cos(Math.PI * (textAngle - 90) / 180);
-                const ty = 50 + 25 * Math.sin(Math.PI * (textAngle - 90) / 180);
-                paths += `<text x="${tx}" y="${ty}" transform="rotate(${textAngle}, ${tx}, ${ty})" text-anchor="middle" font-size="4" fill="white" font-weight="bold">${p}</text>`;
-            });
-
-            svg.innerHTML = paths + `<circle cx="50" cy="50" r="4" fill="white" shadow="0 2px 4px rgba(0,0,0,0.2)"/>`;
         }
 
-        function spinWheel() {
-            if(isSpinning || participants.length < 2) return;
-            isSpinning = true;
-            document.getElementById('spin-btn').disabled = true;
-            document.getElementById('winner-banner').classList.remove('scale-100');
-            document.getElementById('winner-banner').classList.add('scale-0');
-
-            const extraRotations = 5 + Math.random() * 5;
-            const randomStop = Math.random() * 360;
-            currentRotation += (extraRotations * 360) + randomStop;
-
-            const wheel = document.getElementById('wheel-svg');
-            wheel.style.transform = `rotate(${currentRotation}deg)`;
-
-            setTimeout(() => {
-                isSpinning = false;
-                document.getElementById('spin-btn').disabled = false;
-                
-                // Calculate winner
-                const actualStop = (currentRotation % 360);
-                const invertedAngle = (360 - actualStop) % 360;
-                const sliceAngle = 360 / participants.length;
-                const winnerIndex = Math.floor(invertedAngle / sliceAngle);
-                const winner = participants[winnerIndex];
-
-                document.getElementById('winner-name').innerText = winner;
-                document.getElementById('winner-banner').classList.remove('scale-0');
-                document.getElementById('winner-banner').classList.add('scale-100');
-                logPulse(`Winner Selected: ${winner}!`);
-            }, 4000);
+        function renderUsers() {
+            const list = document.getElementById('user-list');
+            list.innerHTML = users.length === 0 ? `<div class="col-span-full text-center py-12 text-gray-400">Empty</div>` :
+                users.map(u => `
+                    <div class="bg-white border p-3 rounded-xl flex items-center gap-3 hover:border-blue-300 group">
+                        <div class="user-avatar" style="background-color: ${u.color}">${u.name.charAt(0)}</div>
+                        <div class="flex-1 overflow-hidden">
+                            <div class="text-xs font-bold truncate">${u.name}</div>
+                            <div class="text-[8px] text-gray-400 font-bold uppercase">${u.role}</div>
+                        </div>
+                    </div>
+                `).join('');
         }
 
         // --- CALENDAR LOGIC ---
         function renderCalendar() {
             const display = document.getElementById('calendar-display');
-            const monthLabel = document.getElementById('calendar-month-year');
+            const label = document.getElementById('calendar-month-year');
             const year = currentCalendarDate.getFullYear();
             const month = currentCalendarDate.getMonth();
-            monthLabel.innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentCalendarDate);
+            
+            label.innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentCalendarDate);
             display.innerHTML = '';
+
             ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(d => {
                 const h = document.createElement('div'); h.className = 'calendar-day-header'; h.innerText = d; display.appendChild(h);
             });
+
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const prevMonthDays = new Date(year, month, 0).getDate();
-            for(let i = firstDay - 1; i >= 0; i--) createCell(prevMonthDays - i, true);
-            const today = new Date();
-            for(let i = 1; i <= daysInMonth; i++) {
-                const isToday = today.getDate() === i && today.getMonth() === month && today.getFullYear() === year;
-                createCell(i, false, isToday);
-            }
-            const remaining = 42 - (display.children.length - 7);
-            for(let i = 1; i <= remaining; i++) createCell(i, true);
+            const prevDays = new Date(year, month, 0).getDate();
+
+            for(let i = firstDay - 1; i >= 0; i--) createCell(prevDays - i, true);
+            for(let i = 1; i <= daysInMonth; i++) createCell(i, false);
         }
 
-        function createCell(num, isOtherMonth, isToday) {
-            const display = document.getElementById('calendar-display');
+        function createCell(num, isOther) {
             const cell = document.createElement('div');
-            cell.className = `calendar-cell ${isOtherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`;
-            cell.innerHTML = `<div class="day-number text-xs font-bold mb-1">${num}</div>`;
-            const dateStr = `${currentCalendarDate.getFullYear()}-${String(currentCalendarDate.getMonth() + 1).padStart(2, '0')}-${String(num).padStart(2, '0')}`;
-            events.filter(e => e.date === dateStr && !isOtherMonth).forEach(e => {
-                cell.innerHTML += `<div class="event-chip event-${e.priority}">${e.name}</div>`;
-            });
-            display.appendChild(cell);
+            cell.className = `calendar-cell ${isOther ? 'opacity-30' : ''}`;
+            cell.innerHTML = `<div class="text-[11px] font-bold text-gray-400 mb-1">${num}</div>`;
+            if(!isOther && num % 7 === 0) cell.innerHTML += `<div class="event-chip">System Sync</div>`;
+            document.getElementById('calendar-display').appendChild(cell);
         }
 
         function changeMonth(delta) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta); renderCalendar(); }
-        function submitEvent() {
-            const name = document.getElementById('event-name').value.trim();
-            const date = document.getElementById('event-date').value;
-            if(name && date) {
-                events.push({ id: Date.now(), name, date, priority: document.getElementById('event-priority').value });
-                renderCalendar(); closeModal(); logPulse(`Scheduled: ${name}`);
-            }
-        }
 
-        // --- USER LOGIC ---
-        function addUser() {
-            const name = document.getElementById('user-name-input').value.trim();
-            if(!name) return;
-            users.push({ id: Date.now(), name, role: document.getElementById('user-role-input').value, color: 'bg-blue-500' });
-            renderUsers(); updateCharts(); document.getElementById('user-name-input').value = '';
-        }
-
-        function renderUsers() {
-            const list = document.getElementById('user-list');
-            document.getElementById('empty-users').style.display = users.length > 0 ? 'none' : 'flex';
+        // --- DRAW LOGIC ---
+        function renderDrawList() {
+            const list = document.getElementById('draw-list');
             list.innerHTML = users.map(u => `
-                <div class="p-4 bg-gray-50 border border-gray-200 rounded-xl flex items-center gap-4">
-                    <div class="user-avatar ${u.color}">${u.name.charAt(0)}</div>
-                    <div class="flex-1"><div class="font-bold text-sm">${u.name}</div><div class="text-xs text-gray-500">${u.role}</div></div>
+                <div class="flex items-center gap-3 p-2 bg-gray-50 rounded-lg text-xs font-medium">
+                    <div class="w-2 h-2 rounded-full" style="background-color: ${u.color}"></div>
+                    <span class="truncate">${u.name}</span>
                 </div>
             `).join('');
-            document.getElementById('user-progress-bar').style.width = `${(users.length / 250) * 100}%`;
-            document.getElementById('user-count-display').innerText = `${users.length} / 250`;
+            document.getElementById('spin-btn').disabled = users.length < 2;
         }
 
-        function updateCharts() {
-            const counts = { GUEST: 0, MODERATOR: 0, ADMIN: 0 };
-            users.forEach(u => counts[u.role]++);
-            if(charts.pie) { charts.pie.data.datasets[0].data = [counts.GUEST || 1, counts.MODERATOR, counts.ADMIN]; charts.pie.update(); }
+        function updateWheel() {
+            const svg = document.getElementById('wheel-svg');
+            if(users.length < 2) {
+                svg.innerHTML = `<circle cx="50" cy="50" r="48" fill="white" stroke="#eee" stroke-width="2"/><text x="50" y="52" text-anchor="middle" font-size="4" fill="#ccc">NEED 2+ USERS</text>`;
+                return;
+            }
+            const slice = 360 / users.length;
+            let paths = '';
+            users.forEach((u, i) => {
+                const start = i * slice; const end = (i + 1) * slice;
+                const x1 = 50 + 48 * Math.cos(Math.PI * (start - 90) / 180);
+                const y1 = 50 + 48 * Math.sin(Math.PI * (start - 90) / 180);
+                const x2 = 50 + 48 * Math.cos(Math.PI * (end - 90) / 180);
+                const y2 = 50 + 48 * Math.sin(Math.PI * (end - 90) / 180);
+                paths += `<path d="M 50 50 L ${x1} ${y1} A 48 48 0 ${slice > 180 ? 1 : 0} 1 ${x2} ${y2} Z" fill="${u.color}" stroke="white" stroke-width="0.2"/>`;
+            });
+            svg.innerHTML = paths + `<circle cx="50" cy="50" r="4" fill="white"/>`;
         }
 
-        function logPulse(msg) {
-            const log = document.getElementById('pulse-log');
-            const entry = document.createElement('div');
-            entry.innerHTML = `<span class="text-blue-500 font-bold">[${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}]</span> ${msg}`;
-            log.prepend(entry);
+        function spinWheel() {
+            if(isSpinning) return;
+            isSpinning = true;
+            document.getElementById('winner-banner').classList.replace('scale-100', 'scale-0');
+            const extra = 1800 + Math.random() * 1800;
+            currentRotation += extra;
+            document.getElementById('wheel-svg').style.transform = `rotate(${currentRotation}deg)`;
+            setTimeout(() => {
+                isSpinning = false;
+                const winningAngle = (360 - (currentRotation % 360)) % 360;
+                const winner = users[Math.floor(winningAngle / (360 / users.length))];
+                document.getElementById('winner-name').innerText = winner.name;
+                document.getElementById('winner-banner').classList.replace('scale-0', 'scale-100');
+            }, 4000);
         }
 
-        function openModal(id) { document.getElementById('os-modal-overlay').style.display = 'flex'; document.getElementById(id).classList.remove('hidden'); }
-        function closeModal() { document.getElementById('os-modal-overlay').style.display = 'none'; document.querySelectorAll('#os-modal-overlay > div').forEach(m => m.classList.add('hidden')); }
+        function getRandomColor() { return ['#4285F4','#EA4335','#FBBC05','#34A853','#9C27B0','#FF9800','#009688','#607D8B'][Math.floor(Math.random()*8)]; }
     </script>
 </body>
 </html>
