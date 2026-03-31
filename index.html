@@ -93,7 +93,10 @@
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: 1fr;
             height: 100%;
+            background-color: #f1f3f4;
+            gap: 1px;
         }
         .calendar-day-header {
             text-align: center;
@@ -101,19 +104,28 @@
             font-weight: 700;
             color: var(--g-gray);
             padding: 12px;
-            border-bottom: 1px solid #f1f3f4;
+            background: white;
             text-transform: uppercase;
         }
         .calendar-cell {
-            border-right: 1px solid #f1f3f4;
-            border-bottom: 1px solid #f1f3f4;
-            padding: 10px;
-            height: 100%;
-            min-height: 100px;
+            padding: 8px;
             background: white;
             position: relative;
+            cursor: pointer;
+            transition: background 0.1s;
         }
-        .calendar-cell:hover { background-color: #fcfcfc; }
+        .calendar-cell:hover { background-color: #f8f9fa; }
+        .calendar-cell.today { background-color: #e8f0fe; }
+        .calendar-cell.today .day-number { 
+            background: var(--g-blue); 
+            color: white; 
+            width: 20px; 
+            height: 20px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
         
         .event-chip {
             font-size: 10px;
@@ -126,6 +138,13 @@
             font-weight: 500;
             background: #e8f0fe;
             color: #1967d2;
+            border-left: 3px solid var(--g-blue);
+        }
+
+        .event-chip.urgent {
+            background: #fce8e6;
+            color: #d93025;
+            border-left-color: #d93025;
         }
 
         #wheel-svg {
@@ -142,9 +161,33 @@
             border-top: 30px solid var(--g-red);
             z-index: 10;
         }
+
+        /* Modal Overlay */
+        #event-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
+
+    <!-- Event Creator Modal -->
+    <div id="event-modal">
+        <div class="google-card p-6 w-80">
+            <h3 class="font-medium mb-4">Schedule Event</h3>
+            <div id="modal-date-label" class="text-xs text-gray-500 mb-4 font-bold"></div>
+            <input type="text" id="modal-event-name" placeholder="Event title" class="w-full border p-2 rounded mb-4 outline-none focus:ring-1 focus:ring-blue-500">
+            <div class="flex gap-2 justify-end">
+                <button onclick="closeModal()" class="text-xs font-bold text-gray-500 px-4 py-2">Cancel</button>
+                <button onclick="saveEvent()" class="btn-primary text-xs py-2">Save</button>
+            </div>
+        </div>
+    </div>
 
     <div class="os-container">
         <!-- HEADER -->
@@ -202,13 +245,14 @@
                 <div class="col-span-12 google-card p-0 flex flex-col overflow-hidden">
                     <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-white">
                         <div class="flex items-center gap-4">
-                            <h2 id="calendar-month-year" class="text-lg font-medium w-40 text-center">March 2026</h2>
+                            <h2 id="calendar-month-year" class="text-lg font-medium w-48 text-left pl-4"></h2>
                             <div class="flex border border-gray-200 rounded-lg overflow-hidden">
                                 <button onclick="changeMonth(-1)" class="px-4 py-1 hover:bg-gray-50">‹</button>
                                 <button onclick="changeMonth(1)" class="px-4 py-1 hover:bg-gray-50 border-l">›</button>
                             </div>
+                            <button onclick="goToToday()" class="text-xs font-bold border px-3 py-1 rounded hover:bg-gray-50">Today</button>
                         </div>
-                        <button onclick="addEvent()" class="btn-primary text-xs py-2">Add Event</button>
+                        <div class="text-xs text-gray-400 font-medium italic pr-4">Click a cell to add events</div>
                     </div>
                     <div class="flex-1 overflow-y-auto custom-scroll bg-gray-50">
                         <div class="calendar-grid h-full" id="calendar-display"></div>
@@ -271,7 +315,9 @@
 
     <script>
         let users = [];
+        let events = {}; // Key: "YYYY-MM-DD", Value: Array of strings
         let currentCalendarDate = new Date();
+        let selectedDateKey = "";
         let isSpinning = false;
         let currentRotation = 0;
         let healthChart = null;
@@ -282,7 +328,15 @@
             renderUsers();
             renderCalendar();
             updateWheel();
+            
+            // Add some default system events
+            const todayKey = getFormattedDate(new Date());
+            events[todayKey] = ["OS Initialized", "System Health Check"];
         };
+
+        function getFormattedDate(d) {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
 
         function initClock() {
             setInterval(() => {
@@ -368,7 +422,7 @@
                 `).join('');
         }
 
-        // --- CALENDAR LOGIC ---
+        // --- CALENDAR LOGIC (DYNAMIC) ---
         function renderCalendar() {
             const display = document.getElementById('calendar-display');
             const label = document.getElementById('calendar-month-year');
@@ -378,27 +432,85 @@
             label.innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentCalendarDate);
             display.innerHTML = '';
 
-            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(d => {
-                const h = document.createElement('div'); h.className = 'calendar-day-header'; h.innerText = d; display.appendChild(h);
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            days.forEach(d => {
+                const h = document.createElement('div');
+                h.className = 'calendar-day-header';
+                h.innerText = d;
+                display.appendChild(h);
             });
 
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const prevDays = new Date(year, month, 0).getDate();
+            const todayKey = getFormattedDate(new Date());
 
-            for(let i = firstDay - 1; i >= 0; i--) createCell(prevDays - i, true);
-            for(let i = 1; i <= daysInMonth; i++) createCell(i, false);
+            // Padding previous month
+            for(let i = firstDay - 1; i >= 0; i--) {
+                const dayNum = prevDays - i;
+                createCell(dayNum, true, new Date(year, month - 1, dayNum));
+            }
+            // Current month
+            for(let i = 1; i <= daysInMonth; i++) {
+                const dateObj = new Date(year, month, i);
+                const isToday = getFormattedDate(dateObj) === todayKey;
+                createCell(i, false, dateObj, isToday);
+            }
         }
 
-        function createCell(num, isOther) {
+        function createCell(num, isOther, dateObj, isToday) {
+            const dateKey = getFormattedDate(dateObj);
             const cell = document.createElement('div');
-            cell.className = `calendar-cell ${isOther ? 'opacity-30' : ''}`;
-            cell.innerHTML = `<div class="text-[11px] font-bold text-gray-400 mb-1">${num}</div>`;
-            if(!isOther && num % 7 === 0) cell.innerHTML += `<div class="event-chip">System Sync</div>`;
+            cell.className = `calendar-cell ${isOther ? 'opacity-30' : ''} ${isToday ? 'today' : ''}`;
+            
+            let eventsHtml = '';
+            if (events[dateKey]) {
+                events[dateKey].forEach(e => {
+                    const isSystem = e.includes("System");
+                    eventsHtml += `<div class="event-chip ${isSystem ? 'urgent' : ''}">${e}</div>`;
+                });
+            }
+
+            cell.innerHTML = `
+                <div class="day-number text-[11px] font-bold text-gray-500 mb-1">${num}</div>
+                <div class="event-container">${eventsHtml}</div>
+            `;
+            
+            cell.onclick = () => openModal(dateKey, num);
             document.getElementById('calendar-display').appendChild(cell);
         }
 
-        function changeMonth(delta) { currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta); renderCalendar(); }
+        function changeMonth(delta) { 
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta); 
+            renderCalendar(); 
+        }
+
+        function goToToday() {
+            currentCalendarDate = new Date();
+            renderCalendar();
+        }
+
+        function openModal(dateKey, num) {
+            selectedDateKey = dateKey;
+            document.getElementById('modal-date-label').innerText = `Planning for: ${dateKey}`;
+            document.getElementById('event-modal').style.display = 'flex';
+            document.getElementById('modal-event-name').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('event-modal').style.display = 'none';
+            document.getElementById('modal-event-name').value = '';
+        }
+
+        function saveEvent() {
+            const val = document.getElementById('modal-event-name').value.trim();
+            if(val) {
+                if(!events[selectedDateKey]) events[selectedDateKey] = [];
+                events[selectedDateKey].push(val);
+                renderCalendar();
+            }
+            closeModal();
+        }
 
         // --- DRAW LOGIC ---
         function renderDrawList() {
